@@ -1251,11 +1251,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         is fairly robust to over-fitting so a large number usually
         results in better performance.
 
-    max_depth : integer, optional (default=3)
-        maximum depth of the individual regression estimators. The maximum
-        depth limits the number of nodes in the tree. Tune this parameter
-        for best performance; the best value depends on the interaction
-        of the input variables.
+    subsample : float, optional (default=1.0)
+        The fraction of samples to be used for fitting the individual base
+        learners. If smaller than 1.0 this results in Stochastic Gradient
+        Boosting. `subsample` interacts with the parameter `n_estimators`.
+        Choosing `subsample < 1.0` leads to a reduction of variance
+        and an increase in bias.
 
     criterion : string, optional (default="friedman_mse")
         The function to measure the quality of a split. Supported criteria
@@ -1294,12 +1295,49 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    subsample : float, optional (default=1.0)
-        The fraction of samples to be used for fitting the individual base
-        learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_estimators`.
-        Choosing `subsample < 1.0` leads to a reduction of variance
-        and an increase in bias.
+    max_depth : integer, optional (default=3)
+        maximum depth of the individual regression estimators. The maximum
+        depth limits the number of nodes in the tree. Tune this parameter
+        for best performance; the best value depends on the interaction
+        of the input variables.
+
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
+
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
+    init : BaseEstimator, None, optional (default=None)
+        An estimator object that is used to compute the initial
+        predictions. ``init`` has to provide ``fit`` and ``predict``.
+        If None it uses ``loss.init_estimator``.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
@@ -1320,58 +1358,20 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    max_leaf_nodes : int or None, optional (default=None)
-        Grow trees with ``max_leaf_nodes`` in best-first fashion.
-        Best nodes are defined as relative reduction in impurity.
-        If None then unlimited number of leaf nodes.
-
-    min_impurity_split : float,
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
-
-    min_impurity_decrease : float, optional (default=0.)
-        A node will be split if this split induces a decrease of the impurity
-        greater than or equal to this value.
-
-        The weighted impurity decrease equation is the following::
-
-            N_t / N * (impurity - N_t_R / N_t * right_impurity
-                                - N_t_L / N_t * left_impurity)
-
-        where ``N`` is the total number of samples, ``N_t`` is the number of
-        samples at the current node, ``N_t_L`` is the number of samples in the
-        left child, and ``N_t_R`` is the number of samples in the right child.
-
-        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
-
-        .. versionadded:: 0.19
-
-    init : BaseEstimator, None, optional (default=None)
-        An estimator object that is used to compute the initial
-        predictions. ``init`` has to provide ``fit`` and ``predict``.
-        If None it uses ``loss.init_estimator``.
-
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance
         once in a while (the more trees the lower the frequency). If greater
         than 1 then it prints progress and performance for every tree.
 
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     presort : bool or 'auto', optional (default='auto')
         Whether to presort the data to speed up the finding of best splits in
@@ -1665,11 +1665,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         is fairly robust to over-fitting so a large number usually
         results in better performance.
 
-    max_depth : integer, optional (default=3)
-        maximum depth of the individual regression estimators. The maximum
-        depth limits the number of nodes in the tree. Tune this parameter
-        for best performance; the best value depends on the interaction
-        of the input variables.
+    subsample : float, optional (default=1.0)
+        The fraction of samples to be used for fitting the individual base
+        learners. If smaller than 1.0 this results in Stochastic Gradient
+        Boosting. `subsample` interacts with the parameter `n_estimators`.
+        Choosing `subsample < 1.0` leads to a reduction of variance
+        and an increase in bias.
 
     criterion : string, optional (default="friedman_mse")
         The function to measure the quality of a split. Supported criteria
@@ -1708,12 +1709,49 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    subsample : float, optional (default=1.0)
-        The fraction of samples to be used for fitting the individual base
-        learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_estimators`.
-        Choosing `subsample < 1.0` leads to a reduction of variance
-        and an increase in bias.
+    max_depth : integer, optional (default=3)
+        maximum depth of the individual regression estimators. The maximum
+        depth limits the number of nodes in the tree. Tune this parameter
+        for best performance; the best value depends on the interaction
+        of the input variables.
+
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
+
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
+    init : BaseEstimator, None, optional (default=None)
+        An estimator object that is used to compute the initial
+        predictions. ``init`` has to provide ``fit`` and ``predict``.
+        If None it uses ``loss.init_estimator``.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
@@ -1734,62 +1772,24 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    max_leaf_nodes : int or None, optional (default=None)
-        Grow trees with ``max_leaf_nodes`` in best-first fashion.
-        Best nodes are defined as relative reduction in impurity.
-        If None then unlimited number of leaf nodes.
-
-    min_impurity_split : float,
-        Threshold for early stopping in tree growth. A node will split
-        if its impurity is above the threshold, otherwise it is a leaf.
-
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
-
-    min_impurity_decrease : float, optional (default=0.)
-        A node will be split if this split induces a decrease of the impurity
-        greater than or equal to this value.
-
-        The weighted impurity decrease equation is the following::
-
-            N_t / N * (impurity - N_t_R / N_t * right_impurity
-                                - N_t_L / N_t * left_impurity)
-
-        where ``N`` is the total number of samples, ``N_t`` is the number of
-        samples at the current node, ``N_t_L`` is the number of samples in the
-        left child, and ``N_t_R`` is the number of samples in the right child.
-
-        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
-
-        .. versionadded:: 0.19
-
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
-
-    init : BaseEstimator, None, optional (default=None)
-        An estimator object that is used to compute the initial
-        predictions. ``init`` has to provide ``fit`` and ``predict``.
-        If None it uses ``loss.init_estimator``.
 
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance
         once in a while (the more trees the lower the frequency). If greater
         than 1 then it prints progress and performance for every tree.
 
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     presort : bool or 'auto', optional (default='auto')
         Whether to presort the data to speed up the finding of best splits in
