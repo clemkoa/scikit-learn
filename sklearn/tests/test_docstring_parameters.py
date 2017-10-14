@@ -29,7 +29,6 @@ PUBLIC_MODULES = set(['sklearn.' + modname
 # The list of modules that are not tested for now
 PUBLIC_MODULES -= set([
     'sklearn.feature_selection',
-    'sklearn.kernel_approximation',
     'sklearn.model_selection',
     'sklearn.multioutput',
     'sklearn.random_projection',
